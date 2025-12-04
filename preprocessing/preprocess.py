@@ -23,8 +23,10 @@ def deskew_image(gray):
     rotated = imutils.rotate_bound(gray, angle)
     return rotated
 
-def preprocess_image(image_path, save_dir=None, target_width=1400):
+def preprocess_image(image_path, save_dir=None, target_width=1400, only_color=True):
     img = load_image(image_path)
+    if only_color:
+        return img, None, None
     # convert to color and gray
     img_color = img.copy()
     gray = cv2.cvtColor(img_color, cv2.COLOR_BGR2GRAY)
