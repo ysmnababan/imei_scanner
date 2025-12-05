@@ -3,14 +3,14 @@ from paddleocr import TextRecognition
 _RECOG = None
 
 def set_recognizer(
-    text_recognition_model_name="en_PP-OCRv5_mobile_rec",
+    text_recognition_model_name="en_PP-OCRv3_mobile_rec",
 ):
     """
     Return a cached PaddleOCR recognition-only instance.
     """
     global _RECOG
     if _RECOG is None:
-        _RECOG = TextRecognition(model_name=text_recognition_model_name) 
+        _RECOG = TextRecognition(model_name=text_recognition_model_name,enable_hpi=True) 
 
 def recognize_crops(
     regions,

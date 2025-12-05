@@ -12,7 +12,7 @@ def set_detector(text_detection_model_name="PP-OCRv5_mobile_det",):
     """
     global _DET
     if _DET is None:
-        _DET = TextDetection(model_name=text_detection_model_name)
+        _DET = TextDetection(model_name=text_detection_model_name, enable_hpi=True)
 
 def sort_quad_points(pts):
     """
@@ -153,7 +153,6 @@ def detect_text_regions(
       [ { 'box': [[x,y],...], 'score': float, 'crop': ndarray }, ... ]
     Works with PaddleOCR 2.x predict() output (dict) and older shapes too.
     """
-    
     # Output folder
     os.makedirs(save_crops_dir, exist_ok=True)
 

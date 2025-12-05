@@ -15,6 +15,10 @@ Folders:
 
 2. Install paddlepaddle (CPU) (follow official instructions for your platform):
    python -m pip install paddlepaddle==3.2.0 -i https://www.paddlepaddle.org.cn/packages/stable/cpu/
+   don't forget to enable high performance inference with:
+   ```
+   paddleocr install_hpi_deps cpu
+   ```
 
 3. Install rest:
    pip install -r requirements.txt
