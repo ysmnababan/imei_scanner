@@ -23,6 +23,18 @@ def deskew_image(gray):
     rotated = imutils.rotate_bound(gray, angle)
     return rotated
 
+def resize_for_ocr(img, max_side=960):
+    h, w = img.shape[:2]
+    scale = max(h, w) / max_side
+    
+    if scale <= 1:
+        return img  # already small
+    
+    new_w = int(w / scale)
+    new_h = int(h / scale)
+    
+    return cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
 def preprocess_image(image_path, save_dir=None, target_width=1400, only_color=True):
     img = load_image(image_path)
     if only_color:

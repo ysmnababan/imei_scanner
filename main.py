@@ -1,3 +1,4 @@
+import time
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 import uvicorn
@@ -31,16 +32,23 @@ def ensure_dir(p: str):
 
 def run_pipeline(img_path: str, outdir: str, is_debug_save:bool):
     ensure_dir(outdir)
-
+    
+    t0 = time.time()
     logger.info("Preprocessing image...")
     img_color, gray, thresh = preprocess_image(img_path, save_dir=outdir, only_color=True)
-
+    print(f"[TIMER] preprocess_image: {time.time() - t0:.3f}s")
+    
+    t0 = time.time()
     logger.info("Detecting text regions...")
     regions = detect_text_regions(img_color, save_crops_dir=os.path.join(outdir, "crops"), is_debug_save=is_debug_save)
+    print(f"[TIMER] detections: {time.time() - t0:.3f}s")
 
+    t0 = time.time()
     logger.info("Running recognition on cropped regions...")
     rec_results = recognize_crops(regions, save_recrops_dir=os.path.join(outdir, "recognized"))
+    print(f"[TIMER] recognitions: {time.time() - t0:.3f}s")
 
+    t0 = time.time()
     logger.info("Assembling full text...")
     full_text = "\n".join(
         r["rec_text"]
@@ -50,6 +58,7 @@ def run_pipeline(img_path: str, outdir: str, is_debug_save:bool):
 
     logger.info("Extracting target block...")
     extracted = extractor.extract_product_block(full_text)
+    print(f"[TIMER] extraction: {time.time() - t0:.3f}s")
 
     return full_text, extracted
 

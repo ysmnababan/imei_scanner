@@ -6,7 +6,7 @@ import os
 
 _DET = None
 
-def set_detector(text_detection_model_name="PP-OCRv5_server_det",):
+def set_detector(text_detection_model_name="PP-OCRv5_mobile_det",):
     """
     Create or return a cached PaddleOCR detector instance (detection-only).
     """
@@ -119,7 +119,7 @@ def save_debug_crop(img, poly, score, out_dir, idx, method="persp", is_debug_sav
     else:
         crop = minarea_rotated_crop(img, poly, pad=6)
     # optional contrast/threshold for debug save
-    if is_debug_save:
+    if not is_debug_save:
         return "", crop
     save_path = os.path.join(out_dir, f"crop_{idx:03d}_{method}_{score:.2f}.jpg")
     cv2.imwrite(save_path, crop)
