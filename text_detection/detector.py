@@ -1,4 +1,3 @@
-# text_detection/__init__.py
 import cv2
 import numpy as np
 from pathlib import Path
@@ -113,13 +112,15 @@ def minarea_rotated_crop(image, quad, pad=4):
     crop = rotated[y1:y2, x1:x2]
     return crop
 
-def save_debug_crop(img, poly, score, out_dir, idx, method="persp"):
+def save_debug_crop(img, poly, score, out_dir, idx, method="persp", is_debug_save=False):
     os.makedirs(out_dir, exist_ok=True)
     if method == "persp":
         crop = perspective_crop(img, poly, pad_pixels=6)
     else:
         crop = minarea_rotated_crop(img, poly, pad=6)
     # optional contrast/threshold for debug save
+    if is_debug_save:
+        return "", crop
     save_path = os.path.join(out_dir, f"crop_{idx:03d}_{method}_{score:.2f}.jpg")
     cv2.imwrite(save_path, crop)
     return save_path, crop
@@ -145,6 +146,7 @@ def sort_polygons_and_scores(polys, scores):
 def detect_text_regions(
     img,
     save_crops_dir=None,
+    is_debug_save=False
 ):
     """
     Runs detection and returns list of detections:
@@ -168,7 +170,7 @@ def detect_text_regions(
     regions = []
     for i, (poly, score) in enumerate(zip(polys, scores)):
         # Use perspective crop (returns file path and the actual crop ndarray)
-        save_path, crop_img = save_debug_crop(img, poly, score, save_crops_dir, i, method="persp")
+        save_path, crop_img = save_debug_crop(img, poly, score, save_crops_dir, i, method="persp", is_debug_save=is_debug_save)
         # Optionally also create rotated crop variant by calling save_debug_crop(..., method="rot")
         regions.append({
             "crop": crop_img,    # BGR numpy array
