@@ -84,6 +84,38 @@ def find_imei_info(img_path: str, outdir: str, is_debug_save:bool):
     return extracted
 
 
+def find_total_price(img_path: str, outdir: str, is_debug_save:bool):
+    ensure_dir(outdir)
+    
+    t0 = time.time()
+    logger.info("Preprocessing image...")
+    img_color, gray, thresh = preprocess_image(img_path, save_dir=outdir, only_color=True)
+    print(f"[TIMER] preprocess_image: {time.time() - t0:.3f}s")
+    
+    t0 = time.time()
+    logger.info("Detecting text regions...")
+    regions = detect_text_regions(img_color, save_crops_dir=os.path.join(outdir, "crops"), is_debug_save=is_debug_save)
+    print(f"[TIMER] detections: {time.time() - t0:.3f}s")
+
+    t0 = time.time()
+    logger.info("Running recognition on cropped regions...")
+    rec_results = recognize_crops(regions, save_recrops_dir=os.path.join(outdir, "recognized"))
+    print(f"[TIMER] recognitions: {time.time() - t0:.3f}s")
+
+    t0 = time.time()
+    logger.info("Assembling full text...")
+    full_text = "\n".join(
+        r["rec_text"]
+        for r in rec_results
+        if isinstance(r.get("rec_text"), str) and r["rec_text"].strip()
+    )
+
+    logger.info("Extracting target block...")
+    extracted = extractor.extract_total_amount(rec_results)
+    print(f"[TIMER] extraction: {time.time() - t0:.3f}s")
+
+    return extracted
+
 @app.post("/imei")
 async def ocr_endpoint(
     file: UploadFile = File(...),
@@ -107,6 +139,29 @@ async def ocr_endpoint(
         logger.exception("Error running OCR pipeline")
         return JSONResponse({"error": str(e)}, status_code=500)
 
+
+@app.post("/invoice")
+async def ocr_endpoint(
+    file: UploadFile = File(...),
+    is_debug_save = Form(False)
+    ):
+    try:
+        # save uploaded file temporarily
+        temp_path = f"temp_{file.filename}"
+        with open(temp_path, "wb") as f:
+            f.write(await file.read())
+
+        # run pipeline
+        extracted = find_total_price(temp_path, OUTPUT_DIR, is_debug_save=is_debug_save)
+
+        # cleanup uploaded file
+        os.remove(temp_path)
+
+        return JSONResponse(extracted)
+
+    except Exception as e:
+        logger.exception("Error running OCR pipeline")
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 @app.get("/")
 def root():
