@@ -3,7 +3,7 @@ from paddleocr import TextRecognition
 _RECOG = None
 
 def set_recognizer(
-    text_recognition_model_name="en_PP-OCRv3_mobile_rec",
+    text_recognition_model_name="en_PP-OCRv5_mobile_rec",
 ):
     """
     Return a cached PaddleOCR recognition-only instance.

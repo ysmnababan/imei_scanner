@@ -29,8 +29,29 @@ def ensure_dir(p: str):
         elif item.is_dir():
             shutil.rmtree(item)
 
+def inspect_var(x):
+    print("Type:", type(x))
+    print("Dir:", dir(x))
 
-def run_pipeline(img_path: str, outdir: str, is_debug_save:bool):
+    # For objects with fields
+    if hasattr(x, "__dict__"):
+        print("Fields (__dict__):", x.__dict__)
+
+    # For dicts
+    if isinstance(x, dict):
+        print("Keys:", list(x.keys()))
+    for i, item in enumerate(x):
+        print(f"Item {i}:")
+        print("  Type:", type(item))
+        print("  Value:", item)
+
+        if hasattr(item, "__dict__"):      # custom object
+            print("  Fields:", item.__dict__)
+
+        if isinstance(item, dict):
+            print("  Keys:", list(item.keys()))
+
+def find_imei_info(img_path: str, outdir: str, is_debug_save:bool):
     ensure_dir(outdir)
     
     t0 = time.time()
@@ -57,13 +78,13 @@ def run_pipeline(img_path: str, outdir: str, is_debug_save:bool):
     )
 
     logger.info("Extracting target block...")
-    extracted = extractor.extract_product_block(full_text)
+    extracted = extractor.extract_info(rec_results)
     print(f"[TIMER] extraction: {time.time() - t0:.3f}s")
 
-    return full_text, extracted
+    return extracted
 
 
-@app.post("/ocr")
+@app.post("/imei")
 async def ocr_endpoint(
     file: UploadFile = File(...),
     is_debug_save = Form(False)
@@ -75,17 +96,12 @@ async def ocr_endpoint(
             f.write(await file.read())
 
         # run pipeline
-        full_text, extracted = run_pipeline(temp_path, OUTPUT_DIR, is_debug_save=is_debug_save)
+        extracted = find_imei_info(temp_path, OUTPUT_DIR, is_debug_save=is_debug_save)
 
         # cleanup uploaded file
         os.remove(temp_path)
 
-        return JSONResponse(
-            {
-                "full_text": full_text,
-                "extracted_block": extracted or "",
-            }
-        )
+        return JSONResponse(extracted)
 
     except Exception as e:
         logger.exception("Error running OCR pipeline")
